@@ -100,6 +100,7 @@ end
         box.vm.provision "shell", inline: <<-SHELL
 		sudo -i
 		lsblk
+		hostnamectl
             SHELL
 
 
