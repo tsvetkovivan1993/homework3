@@ -86,15 +86,17 @@ Vagrant.configure("2") do |config|
 		wget -P /root/  https://raw.githubusercontent.com/tsvetkovivan1993/homework3/main/chroot.sh
 		chmod +x /root/chroot.sh
 		bash 	/root/chroot.sh
-		reboot
+		echo "FINISH"
   	    SHELL
 
-
+#REBOOT
 box.vm.provision :shell do |shell|
     shell.privileged = true
     shell.inline = 'echo rebooting'
     shell.reboot = true
 end
+
+#LSBLK
         box.vm.provision "shell", inline: <<-SHELL
 		sudo -i
 		lsblk
