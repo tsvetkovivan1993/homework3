@@ -1,4 +1,3 @@
-#!/bin/sh
 cat << EOF | chroot /mnt/ /bin/bash
 grub2-mkconfig -o /boot/grub2/grub.cfg
 cd /boot 
