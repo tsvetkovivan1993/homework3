@@ -70,7 +70,7 @@ Vagrant.configure("2") do |config|
             cp ~vagrant/.ssh/auth* ~root/.ssh
             yum install -y mdadm smartmontools hdparm gdisk xfsdump wget vim
 	        sudo -i
-		echo "LVM_itsvetkov" > /etc/hostname
+		echo "LVMitsvetkov" > /etc/hostname
 		echo "CREATING LVM"
 		pvcreate /dev/sdb
 		vgcreate vg_root /dev/sdb
@@ -85,41 +85,22 @@ Vagrant.configure("2") do |config|
 		echo "START"
 		wget -P /root/  https://raw.githubusercontent.com/tsvetkovivan1993/homework3/main/chroot.sh
 		chmod +x /root/chroot.sh
-		bash 	/root/chroot.sh | tee /root/reportCHROT.txt
- 		
-#	config.vm.provision :reload
+		bash 	/root/chroot.sh
+		reboot
+  	    SHELL
 
-#  	config.vm.provision "shell", inline: <<-SHELL
-#                lsblk
-# 	SHELL
-#		echo "#!/bin/sh" >> /root/changeVol.sh
-#		echo "lvremove /dev/VolGroup00/LogVol00" >> /root/changeVol.sh
-#		echo "lvcreate -n VolGroup00/LogVol00 -L 8G /dev/VolGroup00" >> /root/changeVol.sh
-#		echo "mkfs.xfs /dev/VolGroup00/LogVol00" >> /root/changeVol.sh
-#		echo "mount /dev/VolGroup00/LogVol00 /mnt" >> /root/changeVol.sh
-#		echo "xfsdump -J - /dev/vg_root/lv_root | xfsrestore -J - /mnt" >> /root/changeVol.sh
-#		echo "for i in /proc/ /sys/ /dev/ /run/ /boot/; do mount --bind $i /mnt/$i; done" >> /root/changeVol.sh
-#		echo "chroot /mnt/" >> /root/changeVol.sh
-#		echo "grub2-mkconfig -o /boot/grub2/grub.cfg" >> /root/changeVol.sh
-#		echo "cd /boot ; for i in `ls initramfs-*img`; do dracut -v $i `echo $i|sed "s/initramfs-//g;s/.img//g"` --force; done" >> /root/changeVol.sh
-#		echo "pvcreate /dev/sdc /dev/sdd" >> /root/changeVol.sh
-#		echo "vgcreate vg_var /dev/sdc /dev/sdd" >> /root/changeVol.sh
-#		echo "lvcreate -L 950M -m1 -n lv_var vg_var" >> /root/changeVol.sh
-#		echo "mkfs.ext4 /dev/vg_var/lv_var" >> /root/changeVol.sh
-#		echo "mount /dev/vg_var/lv_var /mnt" >> /root/changeVol.sh
-#		echo "rsync -avHPSAX /var/ /mnt/" >> /root/changeVol.sh
-#		echo "umount /mnt" >> /root/changeVol.sh
-#		echo "mount /dev/vg_var/lv_var /var" >> /root/changeVol.sh
-#		echo "echo "`blkid | grep var: | awk '{print $2}'` /var ext4 defaults 0 0" >> /etc/fstab" >> /root/changeVol.sh 
-#		echo "'@reboot sleep 50 && /root/changeVol.sh' >> /etc/crontab" >> /root/changeVol.sh
-#		cat /root/changeVol.sh
-#		bash /root/changeVol.sh
-#		echo "crontab list"
-#		cat /etc/crontab
-#		lsblk
 
-          SHELL
-  
+box.vm.provision :shell do |shell|
+    shell.privileged = true
+    shell.inline = 'echo rebooting'
+    shell.reboot = true
+end
+        box.vm.provision "shell", inline: <<-SHELL
+		sudo -i
+		lsblk
+            SHELL
+
+
         end
     end
   end
