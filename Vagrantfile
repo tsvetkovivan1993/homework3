@@ -96,14 +96,89 @@ box.vm.provision :shell do |shell|
     shell.reboot = true
 end
 
-#LSBLK
+#change root dir on 8 Gb and Var add
         box.vm.provision "shell", inline: <<-SHELL
 		sudo -i
 		lsblk
 		hostnamectl
+		lvremove -f /dev/VolGroup00/LogVol00
+		lvcreate -y -n VolGroup00/LogVol00 -L 8G /dev/VolGroup00
+		mkfs.xfs /dev/VolGroup00/LogVol00
+		mount /dev/VolGroup00/LogVol00 /mnt
+		xfsdump -J - /dev/vg_root/lv_root | xfsrestore -J - /mnt
+		for i in /proc/ /sys/ /dev/ /run/ /boot/; do mount --bind $i /mnt/$i; done
+                echo "START Change root on 8 Gb and VAR"
+		wget -P /root/  https://raw.githubusercontent.com/tsvetkovivan1993/homework3/c8803ea56915eb51a52a60c7208cb27338d63e25/chroot_on8gb.sh
+                chmod +x /root/chroot_on8gb.sh
+                bash    /root/chroot_on8gb.sh
+                echo "FINISH"
+		lsblk
+		echo "fstab report"
+		cat /etc/fstab
+		echo "ROOT DIR size"
+		echo "------------------"
+		df -h /
+		echo "------------------"
             SHELL
-
-
+#REBOOT
+box.vm.provision :shell do |shell|
+    shell.privileged = true
+    shell.inline = 'echo rebooting'
+    shell.reboot = true
+end
+#add home in mirror _ snapshots
+        box.vm.provision "shell", inline: <<-SHELL
+                sudo -i
+		cat /etc/fstab
+#del last string
+		sed -i -e '$d'  /etc/fstab
+		cat /etc/fstab
+		lvremove -y /dev/vg_root/lv_root
+		vgremove -y /dev/vg_root
+		pvremove -y /dev/sdb
+		lvcreate -n LogVol_Home -L 2G /dev/VolGroup00
+		mkfs.xfs /dev/VolGroup00/LogVol_Home
+		mount /dev/VolGroup00/LogVol_Home /mnt/
+		cp -aR /home/* /mnt/ 
+		rm -rf /home/*
+		umount /mnt
+		mount /dev/VolGroup00/LogVol_Home /home/
+		echo "`blkid | grep Home | awk '{print $2}'` /home xfs defaults 0 0" >> /etc/fstab
+		touch /home/file{1..20}
+		ls -lsa /home
+		lvcreate -y -L 100MB -s -n home_snap /dev/VolGroup00/LogVol_Home
+		rm -f /home/file{11..20}
+		ls -lsa /home
+		umount /home
+		lvconvert --merge /dev/VolGroup00/home_snap
+		mount /home
+		ls -lsa /home/
+		echo "`blkid | grep var: | awk '{print $2}'` /var ext4 defaults 0 0" >> /etc/fstab
+		mount -a
+		lsblk
+#BTRFS
+		echo "BTRFS START"
+		pvcreate -y /dev/sdb /dev/sde
+		vgcreate -y vg_btrsf /dev/sd{e,b}
+		lvcreate -y -L 100M -m1 -n lv_btrsf vg_btrsf
+		mkfs.btrfs /dev/vg_btrsf/lv_btrsf
+		mount /dev/vg_btrsf/lv_btrsf /opt
+		echo "`blkid | grep btrfs|head -n1  | awk '{print $2}'` /opt btrfs defaults 0 0" >> /etc/fstab 
+		mount -a
+		touch /opt/file_onbtrfs{1..20}
+		umount -f /opt
+		lvcreate -y -L 100MB -s -n opt_snapshot /dev/vg_btrsf/lv_btrsf
+		echo "PVS"
+		pvs
+		echo "VGS"
+		vgs
+		echo "LVS"
+		lvs
+		echo "FINISH"
+		mount -a
+		lsblk
+		echo "All log in vagrant console"
+            SHELL
         end
     end
   end
