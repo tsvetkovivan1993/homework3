@@ -9,6 +9,5 @@ mount /dev/vg_var/lv_var /mnt
 rsync -avHPSAX /var/ /mnt/
 umount /mnt
 mount /dev/vg_var/lv_var /var
-#echo "`blkid | grep var: | awk '{print $2}'` /var ext4 defaults 0 0" >> /etc/fstab
 exit
 EOF
